@@ -1,0 +1,122 @@
+---
+main_topsize: 0.2 #percent coverage of the poster
+main_bottomsize: 0.1
+title: 'THE PURSUIT OF HAPPINESS'
+author:
+  - name: 'Saarth Soparkar'
+    affil: 1
+    main: true
+affiliation:
+  - num: 1
+    address: University of Massachusetts Amherst
+main_findings:
+  - "Can price of bottled water actually affect your happiness levels????"
+output: 
+  posterdown::posterdown_betterport:
+    self_contained: false
+    pandoc_args: --mathjax
+    number_sections: false
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      tidy = FALSE,
+                      message = FALSE,
+                      fig.align = 'center',
+                      out.width = "100%")
+options(knitr.table.format = "pdf") 
+library(tidyverse)
+library(broom)
+data = read.table("hcl.txt")
+names(data) = c("city", "sunshine", "water", "obesity", "lifeexp","pollution","hap","outd","tout", "gym")
+attach(data)
+```
+
+
+# INTRODUCTION
+"Happiness is not by chance, but by choice." 
+Although considered a very subjective term, happiness can actually be objectified through the Happiness Index. Happiness Index is defined as a survey tool that measures happiness, well-being, and features of sustainability and resilience.We are constantly numbed by distractions. In our busy fact paced world especially when living that hard city life we fail to evaluate the choices we make and how it has a direct impact on our living.
+
+# AIM
+The aim of the project is to take an analytical view at various factors like obesity, pollution levels and their impact on happiness in some major metropolitan cities. We first examine the variables in the given dataset. Based on that comprehensive overview we build a best fit regression model choosing suitable variables and transformations to explain the happiness index. Finally, we interpet the statistical results and conclude our analysis.
+
+# DATA
+The dataset is a compilation of 9 metrics of 42 Metropolitan cities.
+Key -
+1) city = City Names
+2) sunshine = Number Of Hours Of Sunshine
+3) water = Cost Of Bottle Of Water (Pounds)
+4) obesity = Obesity Percentage
+5) lifeexp = Life Expectancy
+6) pollution = Pollution Levels
+7) hap = Happiness Index
+8) outd = Outdoor Activites
+9) tout = Takeout Places
+10) gym = Gym Prices
+
+We first check the correlation of each predictor variable (sunshine, water, obesity, lifeexp, pollution,outd, tout, gym) with our response variable (hap). Here are the main highlights.
+```{r}
+ggplot(data, aes(x= water, y = hap)) + geom_point()
+ggplot(data, aes(x= lifeexp, y = hap)) + geom_point()
+ggplot(data, aes(x= pollution, y = hap)) + geom_point()
+```
+
+# MODEL
+After a series of stepwise regression and transformations we picked the variables water, pollution, and lifeexp. 
+Inorder to improve our model we regressed hap with the log of water and pollution.
+We also took the logarithm of the cube of lifeexp.
+Therefore our model will be of the form:
+$$
+hap = B0 +B1*log(water) + B2*lifeexp + B3*log(pollution)
+$$
+hap ~ log(water) + lifeexp + log(pollution)
+
+```{r, out.height="80%", out.width="80%"}
+bestmod = lm(hap ~ log(water) + lifeexp + log(pollution), na.action = na.exclude)
+knitr::kable(
+  tidy(bestmod), format = "html",
+  caption = "Estimates for a model of happiness index regressed on price of bottled water, life expectancy, and pollution level.")
+dataY = augment(bestmod,data)
+dataY %>% ggplot() + geom_point(mapping = aes(x = log(water), y = hap)) +
+  geom_smooth(mapping = aes(x = log(water), y = .fitted))
+```
+Therefore, the model gives us hap = 4.29993 + 0.04870log(water) +  0.04870(lifeexp) -0.41532log(pollution)
+
+
+# HYPOTHESIS TESTING:
+Null Hypothesis : B1,B2,B3 = 0
+Alternative Hypothesis :B1,B2,B3 != 0
+Let alpha be 0.05
+
+Decision Rule: If the p-value is less than alpha we reject the null hypothesis
+
+Conclusion : 
+For B1, p - value = 1.24e-05 < 0.05
+For B2, p - value = 0.00747 < 0.05
+For B3, p - value = 0.02847 < 0.05
+
+Since p - value is less than alpha in all 3 cases we reject the null hypothesis.
+
+# CONCLUSION
+We conclude our best fit model to be hap = 4.29993 + 0.66497log(water) +  0.04870(lifeexp) -0.41532log(pollution)
+Interpretation of the model :
+When all the parameters are set to 0 the happiness index of people is B0 = 4.29993
+When water increases by 1% the happiness index increases by 0.66497 units.
+When cube of lifeexp increase by unit the happiness index increases by 0.04870 units.
+When the pollution increase by 1% the happiness index decreases by 0.41532 units.
+Although, these factors might seem random this regression model is income driven -
+Higher the income, higher the prices of bottled water people can afford. 
+Higher the income, better the healthcare hence improving life expectancy.
+Higher the income, better the resources to reduce level of pollution.
+Therefore, the happiness index of a city is best explained by pollution level, price of bottled water ,and life expectancy.
+
+
+# REFERENCES
+1) Kanawattanachai, P. (2022, March 3). Healthy Lifestyle Cities Report 2021. Kaggle. Retrieved April 29, 2022, from https://www.kaggle.com/datasets/prasertk/healthy-lifestyle-cities-report-2021 
+
+## Peer-reviewed :
+2) Liu, Y., Zhu, K., Li, R. L., Song, Y., & Zhang, Z. J. (2021). Air Pollution Impairs Subjective Happiness by Damaging Their Health. International journal of environmental research and public health, 18(19), 10319. https://doi.org/10.3390/ijerph181910319
+
+3) Veenhoven, R. (n.d.). Happy life-expectancy - social indicators research. SpringerLink. Retrieved April 29, 2022, from https://link.springer.com/article/10.1007/BF00300831 
+
+
