@@ -1,4 +1,4 @@
-# HappinessIndexAnalysis
+# World Happiness Index Analysis
 
 "Happiness is not by chance, but by choice." 
 
